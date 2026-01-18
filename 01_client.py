@@ -48,6 +48,7 @@ async def main():
         # "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
         "Can you list my all expenses for January 2026 (DD/MM/YYY) month and print it in proper readable format",
         "Hi Hello can you tell me what all tools do you have ??",
+        "can you roll 2 dice and also add 10 and 15 and give me result for both",
     ]
     for prompt in prompts:
         print("\n---------------- New Iteration ----------------")
@@ -61,18 +62,22 @@ async def main():
             print("\n--- Tool Calling Failed ---\n")
             # continue
         else:
-            selected_tool = response.tool_calls[0]["name"]
-            selected_tool_args = response.tool_calls[0]["args"]
-            selected_tool_id = response.tool_calls[0]["id"]
-            print(
-                f"\n{selected_tool} was called with args = {selected_tool_args} and tool id = {selected_tool_id}"
-            )
+            tool_messages=[]
+            print(f"LLM suggested to call total {len(response.tool_calls)} Tools")
+            for tool in response.tool_calls:
+                selected_tool = tool["name"]
+                selected_tool_args = tool["args"] or {}
+                selected_tool_id = tool["id"]
+                print(
+                    f"\n{selected_tool} was called with args = {selected_tool_args} and tool id = {selected_tool_id}"
+                )
 
-            tool_result = await named_tools[selected_tool].ainvoke(selected_tool_args)
-            tool_message = ToolMessage(content=tool_result, tool_call_id=selected_tool_id)
-            print("\nTool Result --> ", tool_result)
+                tool_result = await named_tools[selected_tool].ainvoke(selected_tool_args)
+                tool_messages.append(ToolMessage(content=json.dumps(tool_result,indent=4), tool_call_id=selected_tool_id))
+                print("\nTool Result --> ", tool_result)
+                
 
-            final_response = await llm_with_tools.ainvoke([prompt, response, tool_message])
+            final_response = await llm_with_tools.ainvoke([prompt, response, *tool_messages])
             print("\nChatBot --> ", final_response.content)
         
         print("\n---------------- End of Iteration ----------------\n")
