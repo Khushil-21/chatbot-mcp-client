@@ -19,11 +19,11 @@ SERVERS = {
         ],
     },
     # remote server
-    "Expense Tracker":{
-        "transport":"streamable_http",
-        "url":"https://khushil-expense-tracker.fastmcp.app/mcp"
-    }
-    # local server 
+    "Expense Tracker": {
+        "transport": "streamable_http",
+        "url": "https://khushil-expense-tracker.fastmcp.app/mcp",
+    },
+    # local server
     # "Expense Tracker": {
     #     "transport": "stdio",
     #     "command": "uv",
@@ -53,7 +53,7 @@ async def main():
         # "roll dice 7 times and do average of that",
         # "add 10 and 995",
         # "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
-        "Can you add an expense for 4th Nov 2025 for pizza order bill was 499",
+        # "Can you add an expense for 4th Nov 2025 for pizza order bill was 499",
         "Can you list my all the expenses",
         # "Hi Hello can you tell me what all tools do you have ??",
         # "can you roll 2 dice and also add 10 and 15 and give me result for both",
@@ -63,14 +63,14 @@ async def main():
         print("\nUser --> ", prompt)
 
         response = await llm_with_tools.ainvoke(prompt)
-        
+
         if not response.tool_calls:
             print("\nChatBot --> ", response.content)
             print("\nLLM Failed to identify the tool call. Continuing to next prompt")
             print("--- Tool Calling Failed ---\n")
             # continue
         else:
-            tool_messages=[]
+            tool_messages = []
             print(f"LLM suggested to call total {len(response.tool_calls)} Tools")
             for tool in response.tool_calls:
                 selected_tool = tool["name"]
@@ -80,14 +80,24 @@ async def main():
                     f"\n{selected_tool} was called with args = {selected_tool_args} and tool id = {selected_tool_id}"
                 )
 
-                tool_result = await named_tools[selected_tool].ainvoke(selected_tool_args)
-                tool_messages.append(ToolMessage(content=json.dumps(tool_result,indent=4), tool_call_id=selected_tool_id))
+                tool_result = (
+                    await named_tools[selected_tool].ainvoke(selected_tool_args)
+                    if selected_tool_args
+                    else await named_tools[selected_tool].ainvoke({})
+                )
+                tool_messages.append(
+                    ToolMessage(
+                        content=json.dumps(tool_result, indent=4),
+                        tool_call_id=selected_tool_id,
+                    )
+                )
                 print("\nTool Result --> ", tool_result)
-                
 
-            final_response = await llm_with_tools.ainvoke([prompt, response, *tool_messages])
+            final_response = await llm_with_tools.ainvoke(
+                [prompt, response, *tool_messages]
+            )
             print("\nChatBot --> ", final_response.content)
-        
+
         print("\n---------------- End of Iteration ----------------\n")
 
 
