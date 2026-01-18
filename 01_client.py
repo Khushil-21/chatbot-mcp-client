@@ -43,31 +43,38 @@ async def main():
     llm = ChatOllama(model="gpt-oss:20b-cloud")
     llm_with_tools = llm.bind_tools(tools)
     prompts = [
-        # "roll dice 7 times and do average of that",
-        # "add 10 and 995",
-        "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
+        "roll dice 7 times and do average of that",
+        "add 10 and 995",
+        # "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
         "Can you list my all expenses for January 2026 (DD/MM/YYY) month and print it in proper readable format",
+        "Hi Hello can you tell me what all tools do you have ??",
     ]
     for prompt in prompts:
         print("\n---------------- New Iteration ----------------")
         print("\nUser --> ", prompt)
 
         response = await llm_with_tools.ainvoke(prompt)
+        
+        if not response.tool_calls:
+            print("\nChatBot --> ", response.content)
+            print("LLM Failed to identify the tool call. Continuing to next prompt")
+            print("\n--- Tool Calling Failed ---\n")
+            # continue
+        else:
+            selected_tool = response.tool_calls[0]["name"]
+            selected_tool_args = response.tool_calls[0]["args"]
+            selected_tool_id = response.tool_calls[0]["id"]
+            print(
+                f"\n{selected_tool} was called with args = {selected_tool_args} and tool id = {selected_tool_id}"
+            )
 
-        selected_tool = response.tool_calls[0]["name"]
-        selected_tool_args = response.tool_calls[0]["args"]
-        selected_tool_id = response.tool_calls[0]["id"]
-        print(
-            f"\n{selected_tool} was called with args = {selected_tool_args} and tool id = {selected_tool_id}"
-        )
+            tool_result = await named_tools[selected_tool].ainvoke(selected_tool_args)
+            tool_message = ToolMessage(content=tool_result, tool_call_id=selected_tool_id)
+            print("\nTool Result --> ", tool_result)
 
-        tool_result = await named_tools[selected_tool].ainvoke(selected_tool_args)
-        tool_message = ToolMessage(content=tool_result, tool_call_id=selected_tool_id)
-        print("\nTool Result --> ", tool_result)
-
-        final_response = await llm_with_tools.ainvoke([prompt, response, tool_message])
-        print("\nChatBot --> ", final_response.content)
-
+            final_response = await llm_with_tools.ainvoke([prompt, response, tool_message])
+            print("\nChatBot --> ", final_response.content)
+        
         print("\n---------------- End of Iteration ----------------\n")
 
 
