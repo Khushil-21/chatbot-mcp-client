@@ -5,6 +5,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_ollama import ChatOllama
 
 SERVERS = {
+    # local server
     "demo-mcp-server": {
         "transport": "stdio",
         "command": "uv",
@@ -17,18 +18,24 @@ SERVERS = {
             r"E:\\MyUnquieProjects\\demo-mcp-server\\main.py",
         ],
     },
-    "Expense Tracker": {
-        "transport": "stdio",
-        "command": "uv",
-        "args": [
-            "--directory",
-            r"E:\\MyUnquieProjects\\expense-tracker-mcp",
-            "run",
-            "fastmcp",
-            "run",
-            "main.py",
-        ],
-    },
+    # remote server
+    "Expense Tracker":{
+        "transport":"streamable_http",
+        "url":"https://khushil-expense-tracker.fastmcp.app/mcp"
+    }
+    # local server 
+    # "Expense Tracker": {
+    #     "transport": "stdio",
+    #     "command": "uv",
+    #     "args": [
+    #         "--directory",
+    #         r"E:\\MyUnquieProjects\\expense-tracker-mcp",
+    #         "run",
+    #         "fastmcp",
+    #         "run",
+    #         "main.py",
+    #     ],
+    # },
 }
 
 
@@ -43,12 +50,13 @@ async def main():
     llm = ChatOllama(model="gpt-oss:20b-cloud")
     llm_with_tools = llm.bind_tools(tools)
     prompts = [
-        "roll dice 7 times and do average of that",
-        "add 10 and 995",
+        # "roll dice 7 times and do average of that",
+        # "add 10 and 995",
         # "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
-        "Can you list my all expenses for January 2026 (DD/MM/YYY) month and print it in proper readable format",
-        "Hi Hello can you tell me what all tools do you have ??",
-        "can you roll 2 dice and also add 10 and 15 and give me result for both",
+        "Can you add an expense for 4th Nov 2025 for pizza order bill was 499",
+        "Can you list my all the expenses",
+        # "Hi Hello can you tell me what all tools do you have ??",
+        # "can you roll 2 dice and also add 10 and 15 and give me result for both",
     ]
     for prompt in prompts:
         print("\n---------------- New Iteration ----------------")
@@ -58,8 +66,8 @@ async def main():
         
         if not response.tool_calls:
             print("\nChatBot --> ", response.content)
-            print("LLM Failed to identify the tool call. Continuing to next prompt")
-            print("\n--- Tool Calling Failed ---\n")
+            print("\nLLM Failed to identify the tool call. Continuing to next prompt")
+            print("--- Tool Calling Failed ---\n")
             # continue
         else:
             tool_messages=[]
