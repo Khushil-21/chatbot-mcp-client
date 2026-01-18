@@ -45,8 +45,8 @@ async def main():
     prompts = [
         # "roll dice 7 times and do average of that",
         # "add 10 and 995",
-        "Can you list my all expenses for september (1/9/25 to 30/9/25) month and print it in proper readable format",
-        "Can you list my all expenses for January 2026 month and print it in proper readable format",
+        "Can you list my all expenses for september (01/09/2025 to 30/9/25) (DD/MM/YYY)month and print it in proper readable format",
+        "Can you list my all expenses for January 2026 (DD/MM/YYY) month and print it in proper readable format",
     ]
     for prompt in prompts:
         print("\n---------------- New Iteration ----------------")
